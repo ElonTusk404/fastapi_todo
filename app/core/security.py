@@ -8,6 +8,7 @@ import json
 from bson import ObjectId
 from dotenv import load_dotenv
 import os
+from app.db.database import db
 load_dotenv()
 oauth = OAuth2PasswordBearer(tokenUrl='api/v1/login/')
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated = 'auto')
@@ -20,7 +21,7 @@ def hash_password(password) -> Any:
 
 def encode_jwt_token(data : dict) -> str:
     payload = data.copy()
-    payload.update({'exp' : datetime.utcnow() + timedelta(minutes=os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES'))})
+    payload.update({'exp' : datetime.utcnow() + timedelta(minutes=int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES')))})
     return jwt.encode(payload, os.getenv('SECRET_KEY'), algorithm=os.getenv('ALGORITHM'))
 
 def decode_jwt_token(token : str = Depends(oauth)) -> dict:
@@ -41,3 +42,9 @@ class MongoJSONEncoder(json.JSONEncoder):
         if isinstance(o, ObjectId):
             return str(o)
         return json.JSONEncoder.default(self, o)
+    
+async def authenticate_user(username : str, password : str) -> bool:
+    user = await db.users.find_one({'username' : username})
+    if user and verify_password(password, user['password']):
+        return True
+    return False
