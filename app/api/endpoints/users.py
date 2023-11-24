@@ -17,5 +17,5 @@ async def register(user: UserCreate):
 @router.post('/login/')
 async def login(user_in : OAuth2PasswordRequestForm = Depends()):
     if await authenticate_user(user_in.username, user_in.password):
-        return {'access_token' : encode_jwt_token({'sub' : user_in.username}), 'token_type' : 'Bearer'}
+        return JSONResponse(status_code=status.HTTP_200_OK, content={'access_token' : encode_jwt_token({'sub' : user_in.username}), 'token_type' : 'Bearer'})
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid creditionals', headers={'WWW-Authenticate' : 'Bearer'})
